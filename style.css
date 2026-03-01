@@ -1,0 +1,24 @@
+body {
+    margin: 0;
+    background: radial-gradient(#050510, #000);
+    font-family: Arial;
+    text-align: center;
+    color: cyan;
+    overflow: hidden;
+}
+
+h1 {
+    text-shadow: 0 0 20px cyan;
+}
+
+canvas {
+    background: rgba(0,0,0,0.8);
+    border: 2px solid cyan;
+    box-shadow: 0 0 25px cyan;
+    touch-action: none;
+}
+
+#score {
+    margin-top: 10px;
+    font-size: 20px;
+}
