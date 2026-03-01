@@ -4,7 +4,19 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth * 0.9;
 canvas.height = window.innerHeight * 0.7;
 
-/* Paddle */
+/* ================= GAME STATE ================= */
+let gameRunning = true;
+
+/* ================= SCREEN SHAKE ================= */
+let shakeTime = 0;
+let shakeStrength = 0;
+
+function triggerShake(strength, duration) {
+    shakeStrength = strength;
+    shakeTime = duration;
+}
+
+/* ================= PADDLE ================= */
 let paddle = {
     width: 120,
     height: 15,
@@ -13,7 +25,7 @@ let paddle = {
     speed: 8
 };
 
-/* Ball */
+/* ================= BALL ================= */
 let ball = {
     x: canvas.width / 2,
     y: canvas.height - 60,
@@ -22,7 +34,7 @@ let ball = {
     dy: -4
 };
 
-/* Bricks */
+/* ================= BRICKS ================= */
 const rows = 5;
 const cols = 8;
 const brickPadding = 10;
@@ -43,11 +55,11 @@ for (let r = 0; r < rows; r++) {
     }
 }
 
-/* Score */
+/* ================= SCORE ================= */
 let score = 0;
 let combo = 0;
 
-/* Controls */
+/* ================= CONTROLS ================= */
 let rightPressed = false;
 let leftPressed = false;
 
@@ -71,7 +83,7 @@ canvas.addEventListener("touchmove", e => {
     paddle.x = e.touches[0].clientX - rect.left - paddle.width / 2;
 });
 
-/* Draw */
+/* ================= DRAW ================= */
 function drawPaddle() {
     ctx.shadowBlur = 20;
     ctx.shadowColor = "cyan";
@@ -102,12 +114,14 @@ function drawBricks() {
     }
 }
 
-/* Collision */
+/* ================= COLLISION ================= */
 function collision() {
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             let b = bricks[r][c];
-            if (b.status &&
+
+            if (
+                b.status &&
                 ball.x > b.x &&
                 ball.x < b.x + brickWidth &&
                 ball.y > b.y &&
@@ -119,17 +133,33 @@ function collision() {
                 combo++;
                 score += 10 * combo;
 
+                /* SCREEN SHAKE */
                 if (b.power) {
+                    triggerShake(12, 12);
                     paddle.width += 30;
                     setTimeout(() => paddle.width -= 30, 5000);
+                } else {
+                    triggerShake(5, 6);
                 }
             }
         }
     }
 }
 
-/* Game Loop */
+/* ================= GAME LOOP ================= */
 function update() {
+
+    /* ---- SCREEN SHAKE APPLY ---- */
+    ctx.save();
+
+    if (shakeTime > 0) {
+        let dx = (Math.random() - 0.5) * shakeStrength;
+        let dy = (Math.random() - 0.5) * shakeStrength;
+        ctx.translate(dx, dy);
+
+        shakeTime--;
+        shakeStrength *= 0.9;
+    }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -137,6 +167,8 @@ function update() {
     drawBall();
     drawPaddle();
     collision();
+
+    ctx.restore();
 
     ball.x += ball.dx;
     ball.y += ball.dy;
@@ -154,29 +186,46 @@ function update() {
     ) {
         ball.dy *= -1;
         combo = 0;
+        triggerShake(4, 5);
     }
 
     if (ball.y > canvas.height) {
         gameOver();
+        return;
     }
 
-    function gameOver() {
+    if (rightPressed) paddle.x += paddle.speed;
+    if (leftPressed) paddle.x -= paddle.speed;
+
+    paddle.x = Math.max(
+        0,
+        Math.min(canvas.width - paddle.width, paddle.x)
+    );
+
+    document.getElementById("score").innerText =
+        "Score: " + score;
+
+    if (gameRunning)
+        requestAnimationFrame(update);
+}
+
+/* ================= GAME OVER ================= */
+function gameOver() {
+
     gameRunning = false;
 
     setTimeout(() => {
+
         alert("Game Over!");
 
-        // Reset paddle
         paddle.width = 120;
         paddle.x = canvas.width / 2 - 60;
 
-        // Reset ball
         ball.x = canvas.width / 2;
         ball.y = canvas.height - 60;
         ball.dx = 4;
         ball.dy = -4;
 
-        // Reset bricks
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 bricks[r][c].status = 1;
@@ -190,19 +239,6 @@ function update() {
         update();
 
     }, 100);
-}
-
-    if (rightPressed) paddle.x += paddle.speed;
-    if (leftPressed) paddle.x -= paddle.speed;
-
-    paddle.x = Math.max(0,
-        Math.min(canvas.width - paddle.width, paddle.x)
-    );
-
-    document.getElementById("score").innerText =
-        "Score: " + score;
-
-    requestAnimationFrame(update);
 }
 
 update();
