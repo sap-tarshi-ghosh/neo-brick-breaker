@@ -157,9 +157,40 @@ function update() {
     }
 
     if (ball.y > canvas.height) {
-        alert("Game Over");
-        location.reload();
+        gameOver();
     }
+
+    function gameOver() {
+    gameRunning = false;
+
+    setTimeout(() => {
+        alert("Game Over!");
+
+        // Reset paddle
+        paddle.width = 120;
+        paddle.x = canvas.width / 2 - 60;
+
+        // Reset ball
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height - 60;
+        ball.dx = 4;
+        ball.dy = -4;
+
+        // Reset bricks
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                bricks[r][c].status = 1;
+            }
+        }
+
+        score = 0;
+        combo = 0;
+
+        gameRunning = true;
+        update();
+
+    }, 100);
+}
 
     if (rightPressed) paddle.x += paddle.speed;
     if (leftPressed) paddle.x -= paddle.speed;
